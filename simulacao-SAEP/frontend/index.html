@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Projeto do SAEP | Gerenciamento</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">Kanban</div>
+        <div class="nav-links">
+            <a href="index.html">Quadro</a>
+            <a href="cadastro_usuario.html">+ Novo Usuário</a>
+            <a href="cadastro_tarefa.html">+ Nova Tarefa</a>
+        </div>
+    </nav>
+
+    <div class="kanban-grid">
+        <div class="column">
+            <h3>A FAZER</h3>
+            <div id="col_todo"></div>
+        </div>
+        <div class="column">
+            <h3>FAZENDO</h3>
+            <div id="col_doing"></div>
+        </div>
+        <div class="column">
+            <h3>PRONTO</h3>
+            <div id="col_done"></div>
+        </div>
+    </div>
+
+    <script>
+        async function carregar() {
+            try {
+                const res = await fetch('http://localhost:3000/api/tarefas');
+                const tarefas = await res.json();
+                
+                document.getElementById('col_todo').innerHTML = '';
+                document.getElementById('col_doing').innerHTML = '';
+                document.getElementById('col_done').innerHTML = '';
+
+                tarefas.forEach(t => {
+                    const card = `
+                        <div class="task-card">
+                            <strong>${t.descricao}</strong>
+                            <p>Setor: ${t.setor}</p>
+                            <p>Resp: ${t.nome_usuario}</p>
+                            <div class="badge">${t.prioridade}</div>
+                            
+                            <div style="margin-top: 15px; display: flex; gap: 5px; flex-wrap: wrap;">
+                                <button onclick="mudarStatus(${t.id}, 'a fazer')" class="btn-p">A Fazer</button>
+                                <button onclick="mudarStatus(${t.id}, 'fazendo')" class="btn-p">Fazendo</button>
+                                <button onclick="mudarStatus(${t.id}, 'pronto')" class="btn-p">Pronto</button>
+                                <button onclick="editarTarefa(${t.id})" class="btn-p" style="background: #0056b3;">Editar</button>
+                                <button onclick="excluirTarefa(${t.id})" class="btn-p" style="background: #ff4444;">Excluir</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    if(t.status === 'a fazer') document.getElementById('col_todo').innerHTML += card;
+                    else if(t.status === 'fazendo') document.getElementById('col_doing').innerHTML += card;
+                    else if(t.status === 'pronto') document.getElementById('col_done').innerHTML += card;
+                });
+            } catch (err) { 
+                console.error("Erro ao carregar tarefas:", err); 
+            }
+        }
+
+        async function mudarStatus(id, novoStatus) {
+            try {
+                const res = await fetch(`http://localhost:3000/api/tarefas/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: novoStatus })
+                });
+                if (res.ok) carregar();
+            } catch (err) {
+                console.error("Erro ao mudar status:", err);
+            }
+        }
+
+        async function excluirTarefa(id) {
+            if (confirm("Tem certeza que deseja excluir esta tarefa?")) {
+                try {
+                    const res = await fetch(`http://localhost:3000/api/tarefas/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) carregar();
+                } catch (err) {
+                    console.error("Erro ao excluir:", err);
+                }
+            }
+        }
+
+        function editarTarefa(id) {
+            window.location.href = `cadastro_tarefa.html?edit=${id}`;
+        }
+
+        carregar();
+    </script>
+</body>
+</html>

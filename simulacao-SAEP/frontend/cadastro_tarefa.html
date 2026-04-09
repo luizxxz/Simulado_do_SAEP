@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciar Tarefa | Kanban Pro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">SAEP - Simulado</div>
+        <a href="index.html">← Voltar ao Quadro</a>
+    </nav>
+
+    <div class="container-form">
+        <div class="card-form">
+            <h2 id="tituloPagina">Criar Tarefa</h2>
+            <form id="formTask">
+                <label>Responsável:</label>
+                <select id="userSelect" required>
+                    <option value="">carregando..</option>
+                </select>
+
+                <label>Descricao:</label>
+                <input type="text" id="descricao" placeholder="O que deve ser feito?" required>
+
+                <label>Setor:</label>
+                <input type="text" id="setor" placeholder="Ex: Financeiro" required>
+
+                <label>Prioridade:</label>
+                <select id="prioridade">
+                    <option value="baixa">Baixa</option>
+                    <option value="média">Media</option>
+                    <option value="alta">Alta</option>
+                </select>
+
+                <button type="submit" id="btnAcao" class="btn-submit">CRIAR TAREFA</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get('edit');
+
+        async function inicializar() {
+            try {
+                const resUsers = await fetch('http://localhost:3000/api/usuarios');
+                const users = await resUsers.json();
+                const select = document.getElementById('userSelect');
+                
+                select.innerHTML = '<option value="">Selecione quem fará</option>';
+                users.forEach(u => {
+                    select.innerHTML += `<option value="${u.id}">${u.nome}</option>`;
+                });
+
+                if (editId) {
+                    document.getElementById('tituloPagina').innerText = "Editar Tarefa";
+                    document.getElementById('btnAcao').innerText = "SALVAR ALTERAÇÕES";
+                    
+                    const resTasks = await fetch('http://localhost:3000/api/tarefas');
+                    const tarefas = await resTasks.json();
+                    const tarefaParaEditar = tarefas.find(t => t.id == editId);
+                    
+                    if (tarefaParaEditar) {
+                        document.getElementById('userSelect').value = tarefaParaEditar.id_usuario;
+                        document.getElementById('descricao').value = tarefaParaEditar.descricao;
+                        document.getElementById('setor').value = tarefaParaEditar.setor;
+                        document.getElementById('prioridade').value = tarefaParaEditar.prioridade;
+                    }
+                }
+            } catch (err) {
+                console.error("Erro ao carregar dados:", err);
+            }
+        }
+
+        inicializar();
+
+        document.getElementById('formTask').onsubmit = async (e) => {
+            e.preventDefault();
+
+            const dados = {
+                id_usuario: document.getElementById('userSelect').value,
+                descricao: document.getElementById('descricao').value,
+                setor: document.getElementById('setor').value,
+                prioridade: document.getElementById('prioridade').value
+            };
+
+            const url = editId 
+                ? `http://localhost:3000/api/tarefas/${editId}` 
+                : 'http://localhost:3000/api/tarefas';
+            
+            const metodo = editId ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: metodo,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+
+                if (res.ok) {
+                    alert(editId ? "tarefa atualizada" : "tarefa lançada no quadrO");
+                    window.location.href = "index.html";
+                } else {
+                    alert("Erro ao processar.");
+                }
+            } catch (err) {
+                console.error("Erro na requisicao:", err);
+            }
+        };
+    </script>
+</body>
+</html>

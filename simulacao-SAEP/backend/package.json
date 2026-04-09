@@ -1,0 +1,11 @@
+{
+  "name": "kanban-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^4.22.1",
+    "mysql2": "^3.6.1",
+    "pg": "^8.20.0"
+  }
+}
